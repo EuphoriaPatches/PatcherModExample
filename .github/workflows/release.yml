@@ -1,0 +1,71 @@
+name: Release
+
+# Builds the Fabric and NeoForge jars and publishes them as the release of the current version (version in gradle.properties).
+# This is an example mod, so the version never changes: every run deletes the existing release of that version and creates it again.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "common/**"
+      - "fabric/**"
+      - "neoforge/**"
+      - "build-logic/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "LICENSE"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never run two releases at the same time, the later one replaces the earlier one anyway
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Make the Gradle wrapper executable
+        run: chmod +x gradlew
+      - name: Build (cleans build/libs, then builds the Fabric and NeoForge jars into it)
+        run: ./gradlew buildAll --console=plain
+
+      - name: Read the version
+        id: info
+        run: |
+          echo "version=$(grep '^version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+          echo "minecraft=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Replace the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.info.outputs.version }}
+          MINECRAFT: ${{ steps.info.outputs.minecraft }}
+        run: |
+          ls -l build/libs
+          # Delete the release of this version, if there is one, together with its tag so the new one points at this commit
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release delete "$TAG" --cleanup-tag --yes
+          fi
+          gh release create "$TAG" build/libs/*.jar \
+            --target "$GITHUB_SHA" \
+            --title "PatcherModExample $TAG (Minecraft $MINECRAFT)" \
+            --notes "Example mod for the [ShaderPatcher](https://github.com/EuphoriaPatches/ShaderPatcher) library, for Minecraft $MINECRAFT. Pick the jar of your mod loader (Fabric or NeoForge).
+
+          It patches \`Base-120-v2.zip\` from your \`shaderpacks\` folder into two new packs. The base pack is in the [shaderpacks folder of this repository](https://github.com/${{ github.repository }}/tree/main/shaderpacks).
+
+          This is only an example to learn from, it is updated in place and the version does not change." \
+            --latest
