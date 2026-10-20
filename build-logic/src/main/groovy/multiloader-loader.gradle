@@ -1,0 +1,61 @@
+plugins {
+    id 'multiloader-common'
+}
+
+configurations {
+    commonJava {
+        canBeResolved = true
+    }
+    commonResources {
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    compileOnly(project(':common')) {
+        def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+        attributes {
+            attribute(loaderAttribute, 'common')
+        }
+    }
+    commonJava(project(path: ':common', configuration: 'commonJava'))
+    commonResources(project(path: ':common', configuration: 'commonResources'))
+}
+
+// Put the mod jar into the root build/libs folder, which is cleaned at the start of every build
+tasks.named('jar', Jar) {
+    dependsOn(rootProject.tasks.named('cleanLibs'))
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn(configurations.commonJava)
+    source(configurations.commonJava)
+}
+
+// Dev convenience: the example mod patches Base-120-v2.zip, so put it into the dev game's shaderpacks folder
+// before the client starts (both loaders use <loader>/runs/client as game directory)
+def prepareExampleShaderpacks = tasks.register('prepareExampleShaderpacks', Copy) {
+    from(rootProject.file('shaderpacks/Base-120-v2.zip'))
+    into(layout.projectDirectory.dir('runs/client/shaderpacks'))
+}
+tasks.matching { it.name == 'runClient' }.configureEach {
+    dependsOn(prepareExampleShaderpacks)
+}
+
+processResources {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+}
+
+tasks.named('javadoc', Javadoc).configure {
+    dependsOn(configurations.commonJava)
+    source(configurations.commonJava)
+}
+
+tasks.named('sourcesJar', Jar) {
+    dependsOn(configurations.commonJava)
+    from(configurations.commonJava)
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+}

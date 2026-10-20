@@ -1,0 +1,30 @@
+plugins {
+    id 'base'
+    // see https://maven.fabricmc.net/fabric-loom/fabric-loom.gradle.plugin/maven-metadata.xml for new versions
+    id 'net.fabricmc.fabric-loom' version '1.18.1' apply false
+    // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
+    id 'net.neoforged.moddev' version '2.0.147' apply false
+}
+
+// The mod jars of all loaders end up in the root build/libs folder
+tasks.register('cleanLibs', Delete) {
+    group = 'build'
+    description = 'Cleans the root build/libs directory'
+    delete layout.buildDirectory.dir('libs')
+}
+
+// Builds all loader variants. Run it with ./gradlew (it is the default task) or ./gradlew buildAll
+tasks.register('buildAll') {
+    group = 'build'
+    description = 'Builds all mod loader variants into build/libs'
+
+    dependsOn cleanLibs
+    dependsOn ':fabric:build'
+    dependsOn ':neoforge:build'
+
+    doLast {
+        println 'All JARs are available in: ' + layout.buildDirectory.dir('libs').get().asFile
+    }
+}
+
+defaultTasks 'buildAll'

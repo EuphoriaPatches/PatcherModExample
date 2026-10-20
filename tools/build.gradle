@@ -1,0 +1,37 @@
+// Developer tooling, not part of the mod. Run it with: ./gradlew :tools:generatePatch
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+// PatchInfo is shared with the mod, so name and version of the patch are only defined once. It only needs the library,
+// so it is copied here and compiled with the tools instead of making this project depend on the Minecraft sources
+def syncPatchInfo = tasks.register('syncPatchInfo', Copy) {
+    from(rootProject.file('common/src/main/java/com/euphoriapatches/patchermodexample/PatchInfo.java'))
+    into(layout.buildDirectory.dir('generated/sources/patchInfo/com/euphoriapatches/patchermodexample'))
+}
+sourceSets.main.java.srcDir(layout.buildDirectory.dir('generated/sources/patchInfo'))
+tasks.named('compileJava') {
+    dependsOn(syncPatchInfo)
+}
+
+dependencies {
+    implementation "com.euphoriapatches:shaderpatcher:${shaderpatcher_version}"
+}
+
+// Diffs the base zip against the edited folder in shaderpacks/ and writes the .patch into the mod's resources
+tasks.register('generatePatch', JavaExec) {
+    group = 'shaderpatcher'
+    description = 'Generates the patch that turns Base-120 into MyEdit'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.euphoriapatches.patchermodexample.tools.GeneratePatch'
+    args rootProject.file('shaderpacks'),
+            rootProject.file('common/src/main/resources')
+}
