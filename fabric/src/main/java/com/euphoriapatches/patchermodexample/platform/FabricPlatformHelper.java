@@ -32,7 +32,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public Path getShaderpacksDir() {
+    public Path getDefaultShaderpacksDir() {
 
         return FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
     }

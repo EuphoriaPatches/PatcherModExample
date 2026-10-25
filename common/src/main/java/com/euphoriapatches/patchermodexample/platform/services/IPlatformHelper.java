@@ -34,12 +34,31 @@ public interface IPlatformHelper {
     boolean isClient();
 
     /**
+     * Gets the default shaderpacks folder of the loader, which is {@code <game directory>/shaderpacks}.
+     * Use {@link #getShaderpacksDir()} unless you need the default specifically.
+     *
+     * @return The default path of the shaderpacks folder, it might not exist yet.
+     */
+    Path getDefaultShaderpacksDir();
+
+    /**
      * Gets the shaderpacks folder of the game, which is where shaderpacks are installed and where the patched
-     * packs are written to. It is {@code <game directory>/shaderpacks}.
+     * packs are written to. Usually that is {@code <game directory>/shaderpacks}, but some launchers (Dawn Client
+     * for example) move it elsewhere while Iris still works, so Iris is asked where it reads shaderpacks from.
+     * If anything goes wrong, fall back to {@link #getDefaultShaderpacksDir()}.
      *
      * @return The path of the shaderpacks folder, it might not exist yet.
      */
-    Path getShaderpacksDir();
+    default Path getShaderpacksDir() {
+
+        Path defaultDir = getDefaultShaderpacksDir();
+        try {
+            Object result = Class.forName("net.irisshaders.iris.Iris").getMethod("getShaderpacksDirectory").invoke(null);
+            return result instanceof Path ? (Path) result : defaultDir;
+        } catch (Throwable t) {
+            return defaultDir;
+        }
+    }
 
     /**
      * Gets the name of the environment type as a string.

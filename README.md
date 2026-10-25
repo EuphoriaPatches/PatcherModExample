@@ -7,14 +7,14 @@ Built from the [MultiLoader Template](https://github.com/jaredlll08/MultiLoader-
 
 ## Where to look
 
-| What                                                                              | Where                                                                     |
-|-----------------------------------------------------------------------------------|---------------------------------------------------------------------------|
-| Applying a patch, both output names, error handling                               | `common/.../ExampleShaderPatching.java`                                   |
-| Finding the shaderpacks folder (`<game dir>/shaderpacks`)                         | `getShaderpacksDir()` in the `platform` helper of each loader             |
-| Bundling the library into the mod jar                                             | `fabric/build.gradle` (`include`), `neoforge/build.gradle` (`jarJar`)     |
-| Name, version and base of the patch (defined once, used by the mod and the tool)  | `common/.../PatchInfo.java`                                               |
-| Generating the patch                                                              | `tools/.../GeneratePatch.java`, run with `./gradlew :tools:generatePatch` |
-| The example packs                                                                 | `shaderpacks/`, see the README in there                                   |
+| What                                                                               | Where                                                                     |
+|------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| Applying a patch, both output names, error handling                                | `common/.../ExampleShaderPatching.java`                                   |
+| Finding the shaderpacks folder (asks Iris, falls back to `<game dir>/shaderpacks`) | `getShaderpacksDir()` in `IPlatformHelper`, default path per loader       |
+| Bundling the library into the mod jar                                              | `fabric/build.gradle` (`include`), `neoforge/build.gradle` (`jarJar`)     |
+| Name, version and base of the patch (defined once, used by the mod and the tool)   | `common/.../PatchInfo.java`                                               |
+| Generating the patch                                                               | `tools/.../GeneratePatch.java`, run with `./gradlew :tools:generatePatch` |
+| The example packs                                                                  | `shaderpacks/`, see the README in there                                   |
 
 ## Trying it
 

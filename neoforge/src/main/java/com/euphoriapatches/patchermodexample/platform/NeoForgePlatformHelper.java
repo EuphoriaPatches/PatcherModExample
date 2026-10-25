@@ -34,7 +34,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public Path getShaderpacksDir() {
+    public Path getDefaultShaderpacksDir() {
 
         return FMLPaths.GAMEDIR.get().resolve("shaderpacks");
     }
