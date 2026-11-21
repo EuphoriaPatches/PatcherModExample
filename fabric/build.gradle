@@ -1,15 +1,54 @@
 plugins {
     id 'multiloader-loader'
     id 'net.fabricmc.fabric-loom'
+    id 'com.gradleup.shadow' version '9.6.1'
 }
+
+configurations {
+    shade
+    implementation.extendsFrom(shade)
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:${minecraft_version}")
     implementation("net.fabricmc:fabric-loader:${fabric_loader_version}")
     implementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
 
     // Bundle ShaderPatcher into the mod jar
-    implementation("com.euphoriapatches:shaderpatcher:${shaderpatcher_version}")
-    include("com.euphoriapatches:shaderpatcher:${shaderpatcher_version}")
+    shade("com.euphoriapatches:shaderpatcher:${shaderpatcher_version}")
+}
+
+jar {
+    archiveClassifier = 'slim'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+}
+
+shadowJar {
+    dependsOn(rootProject.tasks.named('cleanLibs'))
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+    archiveClassifier = ''
+    configurations = [project.configurations.shade]
+
+    // Relocate into a package unique to this mod so other mods bundling ShaderPatcher cannot conflict
+    relocate 'com.euphoriapatches.shaderpatcher', "${project.group}.shadow.com.euphoriapatches.shaderpatcher"
+
+    filesMatching('META-INF/LICENSE') {
+        if (sourcePath != 'LICENSE') {
+            path = 'META-INF/licenses/LICENSE-shaderpatcher.txt'
+        }
+    }
+
+    // The original MIT notice of this example, bundled separately so it stays when LICENSE is replaced with another license
+    from(rootProject.file('licenses/LICENSE-PatcherModExample.txt')) {
+        into 'META-INF/licenses'
+    }
+
+    // Do not exclude all of META-INF, ShaderPatcher's MPL-2.0 license lives there
+    exclude 'META-INF/maven/**', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.named('assemble') {
+    dependsOn(tasks.named('shadowJar'))
 }
 
 loom {
